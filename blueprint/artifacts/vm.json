@@ -1,0 +1,196 @@
+{
+    "properties": {
+        "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "vmSize" : {
+                    "type" : "string"
+                },
+                "adminUsername" : {
+                    "type" : "string"
+                },
+                "adminPassword" : {
+                    "type" : "string"
+                },
+                "ubuntuOSVersion" : {
+                    "type" : "string"
+                }
+            },
+            "variables": {
+                "deployment-prefix": "blueprint-prefix"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Network/publicIPAddresses",
+                    "apiVersion": "2018-11-01",
+                    "name": "[concat('blueprint-pip', copyIndex())]",
+                    "copy": {
+                        "name" : "piploop",
+                        "count": 3
+                    },
+                    "location": "eastus",
+                    "properties": {
+                        "publicIPAllocationMethod": "Dynamic",
+                        "dnsSettings": {
+                            "domainNameLabel": "[concat('blueprint-dns', copyIndex())]"
+                        }
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkSecurityGroups",
+                    "apiVersion": "2019-08-01",
+                    "name": "blueprint-nsg",
+                    "location": "eastus",
+                    "properties": {
+                        "securityRules": [
+                            {
+                                "name": "default-allow-22",
+                                "properties": {
+                                    "priority": 1000,
+                                    "access": "Allow",
+                                    "direction": "Inbound",
+                                    "destinationPortRange": "22",
+                                    "protocol": "TCP",
+                                    "sourceAddressPrefix": "*",
+                                    "sourcePortRange": "*",
+                                    "destinationAddressPrefix": "*"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/virtualNetworks",
+                    "apiVersion": "2018-11-01",
+                    "name": "blueprint-vnet",
+                    "location": "eastus",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/networkSecurityGroups', 'blueprint-nsg')]"
+                    ],
+                    "properties": {
+                        "addressSpace": {
+                            "addressPrefixes": [
+                                "10.0.0.0/16"
+                            ]
+                        },
+                        "subnets": [
+                            {
+                                "name": "Subnet",
+                                "properties": {
+                                    "addressPrefix": "10.0.0.0/24",
+                                    "networkSecurityGroup": {
+                                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'blueprint-nsg')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2018-11-01",
+                    "name": "[concat('blueprint-nic', copyIndex())]",
+                    "location": "eastus",
+                    "copy" : {
+                        "name" : "nicloop",
+                        "count" : 3
+                    },
+                    "dependsOn": [
+                        "piploop",
+                        "[resourceId('Microsoft.Network/virtualNetworks/', 'blueprint-vnet')]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "[concat('ipconfig', copyIndex())]",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "publicIPAddress": {
+                                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat('blueprint-pip', copyIndex()))]"
+                                    },
+                                    "subnet": {
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'blueprint-vnet', 'Subnet')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2018-10-01",
+                    "name": "[concat('blueprint-vm', copyIndex())]",
+                    "location": "eastus",
+                    "copy": {
+                        "name": "vmloop",
+                        "count": 3
+                    },
+                    "dependsOn": [
+                        "nicloop"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "[parameters('vmSize')]"
+                        },
+                        "osProfile": {
+                            "computerName": "[concat('blueprint-vm', copyIndex())]",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "adminPassword": "[parameters('adminPassword')]",
+                            "linuxConfiguration": "[json('null')]"
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "Canonical",
+                                "offer": "UbuntuServer",
+                                "sku": "[parameters('ubuntuOSVersion')]",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "createOption": "FromImage"
+                            },
+                            "dataDisks": [
+                                {
+                                    "diskSizeGB": 1023,
+                                    "lun": 0,
+                                    "createOption": "Empty"
+                                }
+                            ]
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('blueprint-nic', copyIndex()))]"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ],
+            "outputs": {}
+        },
+        "parameters": {
+            "vmSize" : {
+                "value" : "[parameters('vmSizeGen')]"
+            },
+            "adminUsername" : {
+                "value" : "[parameters('adminUsernameGen')]"
+            },
+            "adminPassword" : {
+                "value" : "[parameters('adminPasswordGen')]"
+            },
+            "ubuntuOSVersion" : {
+                "value" : "[parameters('ubuntuOSVersionGen')]"
+            }
+        },
+        "dependsOn": [
+        ],
+        "resourceGroup": "final-blueprint-rg",
+        "displayName": "virtual-machine-template",
+        "description": "this is my first attempt to create a blueprint via command line"
+    },
+    "kind": "template",
+    "id": "/providers/Microsoft.Blueprint/blueprints/final-blueprint-gulucasd/artifacts/virtualmachine",
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "name": "virtualmachine"
+}

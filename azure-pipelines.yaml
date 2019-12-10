@@ -1,0 +1,16 @@
+trigger:
+- master
+
+variables:
+- group: default-variables
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- pwsh: ./scripts/installPrerequisites.ps1
+  displayName: Install all the necessary libs
+- pwsh: ./scripts/authorizeOnPipeline.ps1 -servicePrincipalPassword $(appPassword) -servicePrincipalId $(appId) -tenantId $(tenantId)
+  displayName: Authorize against Azure
+- pwsh: ./scripts/publishAndAssign.ps1 -blueprintName blueprint-gulucasd -subscriptionId $(subscriptionId) -blueprintVersion $(Build.BuildNumber)
+  displayName: Create a version and assignment
