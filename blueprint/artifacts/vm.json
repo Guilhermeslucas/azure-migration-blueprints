@@ -4,29 +4,83 @@
             "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
             "parameters": {
-                "vmSize" : {
-                    "type" : "string"
+                "vmSize": {
+                    "type": "string"
                 },
-                "adminUsername" : {
-                    "type" : "string"
+                "adminUsername": {
+                    "type": "string"
                 },
-                "adminPassword" : {
-                    "type" : "string"
+                "adminPassword": {
+                    "type": "string"
                 },
-                "ubuntuOSVersion" : {
-                    "type" : "string"
+                "ubuntuOSVersion": {
+                    "type": "string"
+                },
+                "localNetworkPrefix": {
+                    "type": "string"
+                },
+                "localGAtewayIpAddress": {
+                    "type": "string"
+                },
+                "SharedKeyConnection": {
+                    "type": "string"
+                },
+                "vnetAddressPrefix": {
+                    "type": "string"
+                },
+                "defaultSubnetPrefix": {
+                    "type": "string"
+                },
+                "cloudSubnetPrefix": {
+                    "type": "string"
                 }
             },
             "variables": {
-                "deployment-prefix": "blueprint-prefix"
+                "deployment-prefix": "blueprint-prefix",
+                "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'blueprint-vnet', 'GatewaySubnet')]"
             },
             "resources": [
+                {
+                    "apiVersion": "2018-07-01",
+                    "type": "Microsoft.Network/localNetworkGateways",
+                    "name": "localGateway",
+                    "location": "eastus",
+                    "properties": {
+                        "localNetworkAddressSpace": {
+                            "addressPrefixes": [
+                                "[parameters('localNetworkPrefix')]"
+                            ]
+                        },
+                        "gatewayIpAddress": "[parameters('localGAtewayIpAddress')]"
+                    }
+                },
+                {
+                    "apiVersion": "2018-07-01",
+                    "name": "vpnConnection",
+                    "type": "Microsoft.Network/connections",
+                    "location": "eastus",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworkGateways', 'cloudGateway')]",
+                        "[resourceId('Microsoft.Network/localNetworkGateways', 'localGateway')]"
+                    ],
+                    "properties": {
+                        "virtualNetworkGateway1": {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', 'cloudGateway')]"
+                        },
+                        "localNetworkGateway2": {
+                            "id": "[resourceId('Microsoft.Network/localNetworkGateways', 'localGateway')]"
+                        },
+                        "connectionType": "IPsec",
+                        "routingWeight": 10,
+                        "sharedKey": "[parameters('SharedKeyConnection')]"
+                    }
+                },
                 {
                     "type": "Microsoft.Network/publicIPAddresses",
                     "apiVersion": "2018-11-01",
                     "name": "[concat('blueprint-pip', copyIndex())]",
                     "copy": {
-                        "name" : "piploop",
+                        "name": "piploop",
                         "count": 3
                     },
                     "location": "eastus",
@@ -35,6 +89,48 @@
                         "dnsSettings": {
                             "domainNameLabel": "[concat('blueprint-dns', copyIndex())]"
                         }
+                    }
+                },
+                {
+                    "apiVersion": "2018-07-01",
+                    "type": "Microsoft.Network/publicIPAddresses",
+                    "name": "gateway-pip",
+                    "location": "eastus",
+                    "properties": {
+                        "publicIPAllocationMethod": "Dynamic"
+                    }
+                },
+                {
+                    "apiVersion": "2018-07-01",
+                    "type": "Microsoft.Network/virtualNetworkGateways",
+                    "name": "cloudGateway",
+                    "location": "eastus",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/publicIPAddresses', 'gateway-pip')]",
+                        "[resourceId('Microsoft.Network/virtualNetworks', 'blueprint-vnet')]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[variables('gatewaySubnetRef')]"
+                                    },
+                                    "publicIPAddress": {
+                                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'gateway-pip')]"
+                                    }
+                                },
+                                "name": "vnetGatewayConfig"
+                            }
+                        ],
+                        "sku": {
+                            "name": "Basic",
+                            "tier": "Basic"
+                        },
+                        "gatewayType": "Vpn",
+                        "vpnType": "RouteBased",
+                        "enableBgp": "false"
                     }
                 },
                 {
@@ -71,17 +167,23 @@
                     "properties": {
                         "addressSpace": {
                             "addressPrefixes": [
-                                "10.0.0.0/16"
+                                "[parameters('vnetAddressPrefix')]"
                             ]
                         },
                         "subnets": [
                             {
                                 "name": "Subnet",
                                 "properties": {
-                                    "addressPrefix": "10.0.0.0/24",
+                                    "addressPrefix":"[parameters('defaultSubnetPrefix')]",
                                     "networkSecurityGroup": {
                                         "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'blueprint-nsg')]"
                                     }
+                                }
+                            },
+                            {
+                                "name": "GatewaySubnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('cloudSubnetPrefix')]"
                                 }
                             }
                         ]
@@ -92,9 +194,9 @@
                     "apiVersion": "2018-11-01",
                     "name": "[concat('blueprint-nic', copyIndex())]",
                     "location": "eastus",
-                    "copy" : {
-                        "name" : "nicloop",
-                        "count" : 3
+                    "copy": {
+                        "name": "nicloop",
+                        "count": 3
                     },
                     "dependsOn": [
                         "piploop",
@@ -170,21 +272,38 @@
             "outputs": {}
         },
         "parameters": {
-            "vmSize" : {
-                "value" : "[parameters('vmSizeGen')]"
+            "vmSize": {
+                "value": "[parameters('vmSizeGen')]"
             },
-            "adminUsername" : {
-                "value" : "[parameters('adminUsernameGen')]"
+            "adminUsername": {
+                "value": "[parameters('adminUsernameGen')]"
             },
-            "adminPassword" : {
-                "value" : "[parameters('adminPasswordGen')]"
+            "adminPassword": {
+                "value": "[parameters('adminPasswordGen')]"
             },
-            "ubuntuOSVersion" : {
-                "value" : "[parameters('ubuntuOSVersionGen')]"
+            "ubuntuOSVersion": {
+                "value": "[parameters('ubuntuOSVersionGen')]"
+            },
+            "localNetworkPrefix": {
+                "value" : "[parameters('localNetworkPrefixGen')]"
+            },
+            "localGAtewayIpAddress": {
+                "value" : "[parameters('localGAtewayIpAddressGen')]"
+            },
+            "SharedKeyConnection": {
+                "value" : "[parameters('SharedKeyConnectionGen')]"
+            },
+            "vnetAddressPrefix": {
+                "value" : "[parameters('vnetAddressPrefixGen')]"
+            },
+            "defaultSubnetPrefix": {
+                "value" : "[parameters('defaultSubnetPrefixGen')]"
+            },
+            "cloudSubnetPrefix": {
+                "value" : "[parameters('cloudSubnetPrefixGen')]"
             }
         },
-        "dependsOn": [
-        ],
+        "dependsOn": [],
         "resourceGroup": "final-blueprint-rg",
         "displayName": "virtual-machine-template",
         "description": "this is my first attempt to create a blueprint via command line"

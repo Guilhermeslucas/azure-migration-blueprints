@@ -5,7 +5,7 @@ param(
 )
 
 # this is a command in powershell
-Import-AzBlueprintWithArtifact -Name $blueprintName -SubscriptionId $subscriptionId -InputPath  "../blueprint/" -Force
+Import-AzBlueprintWithArtifact -Name $blueprintName -SubscriptionId $subscriptionId -InputPath  "./blueprint/" -Force
 
 # Get the blueprint we just created
 $bp = Get-AzBlueprint -Name $blueprintName -SubscriptionId $subscriptionId
