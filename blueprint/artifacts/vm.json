@@ -7,6 +7,9 @@
                 "vmSize": {
                     "type": "string"
                 },
+                "location": {
+                    "type": "string"
+                },
                 "adminUsername": {
                     "type": "string"
                 },
@@ -33,6 +36,12 @@
                 },
                 "cloudSubnetPrefix": {
                     "type": "string"
+                },
+                "secondaryVnetPrefix": {
+                    "type": "string"
+                },
+                "secondarySubnetPrefix": {
+                    "type": "string"
                 }
             },
             "variables": {
@@ -44,7 +53,7 @@
                     "apiVersion": "2018-07-01",
                     "type": "Microsoft.Network/localNetworkGateways",
                     "name": "localGateway",
-                    "location": "eastus",
+                    "location": "[parameters('location')]",
                     "properties": {
                         "localNetworkAddressSpace": {
                             "addressPrefixes": [
@@ -58,7 +67,7 @@
                     "apiVersion": "2018-07-01",
                     "name": "vpnConnection",
                     "type": "Microsoft.Network/connections",
-                    "location": "eastus",
+                    "location": "[parameters('location')]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Network/virtualNetworkGateways', 'cloudGateway')]",
                         "[resourceId('Microsoft.Network/localNetworkGateways', 'localGateway')]"
@@ -83,7 +92,7 @@
                         "name": "piploop",
                         "count": 3
                     },
-                    "location": "eastus",
+                    "location": "[parameters('location')]",
                     "properties": {
                         "publicIPAllocationMethod": "Dynamic",
                         "dnsSettings": {
@@ -95,7 +104,7 @@
                     "apiVersion": "2018-07-01",
                     "type": "Microsoft.Network/publicIPAddresses",
                     "name": "gateway-pip",
-                    "location": "eastus",
+                    "location":"[parameters('location')]",
                     "properties": {
                         "publicIPAllocationMethod": "Dynamic"
                     }
@@ -104,7 +113,7 @@
                     "apiVersion": "2018-07-01",
                     "type": "Microsoft.Network/virtualNetworkGateways",
                     "name": "cloudGateway",
-                    "location": "eastus",
+                    "location": "[parameters('location')]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Network/publicIPAddresses', 'gateway-pip')]",
                         "[resourceId('Microsoft.Network/virtualNetworks', 'blueprint-vnet')]"
@@ -137,7 +146,7 @@
                     "type": "Microsoft.Network/networkSecurityGroups",
                     "apiVersion": "2019-08-01",
                     "name": "blueprint-nsg",
-                    "location": "eastus",
+                    "location": "[parameters('location')]",
                     "properties": {
                         "securityRules": [
                             {
@@ -160,7 +169,7 @@
                     "type": "Microsoft.Network/virtualNetworks",
                     "apiVersion": "2018-11-01",
                     "name": "blueprint-vnet",
-                    "location": "eastus",
+                    "location": "[parameters('location')]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Network/networkSecurityGroups', 'blueprint-nsg')]"
                     ],
@@ -174,7 +183,7 @@
                             {
                                 "name": "Subnet",
                                 "properties": {
-                                    "addressPrefix":"[parameters('defaultSubnetPrefix')]",
+                                    "addressPrefix": "[parameters('defaultSubnetPrefix')]",
                                     "networkSecurityGroup": {
                                         "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'blueprint-nsg')]"
                                     }
@@ -187,13 +196,76 @@
                                 }
                             }
                         ]
-                    }
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "2016-06-01",
+                            "type": "virtualNetworkPeerings",
+                            "name": "vnet1to2peering",
+                            "location": "[parameters('location')]",
+                            "dependsOn": [
+                                "[concat('Microsoft.Network/virtualNetworks/', 'blueprint-vnet-2')]",
+                                "[concat('Microsoft.Network/virtualNetworks/', 'blueprint-vnet')]"
+                            ],
+                            "properties": {
+                                "allowVirtualNetworkAccess": "true",
+                                "allowForwardedTraffic": "false",
+                                "allowGatewayTransit": "false",
+                                "useRemoteGateways": "false",
+                                "remoteVirtualNetwork": {
+                                    "id": "[resourceId('Microsoft.Network/virtualNetworks', 'blueprint-vnet-2')]"
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "apiVersion": "2016-03-30",
+                    "type": "Microsoft.Network/virtualNetworks",
+                    "name": "blueprint-vnet-2",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "addressSpace": {
+                            "addressPrefixes": [
+                                "[parameters('secondaryVnetPrefix')]"
+                            ]
+                        },
+                        "subnets": [
+                            {
+                                "name": "blueprint-vnet-2-default",
+                                "properties": {
+                                    "addressPrefix": "[parameters('secondarySubnetPrefix')]"
+                                }
+                            }
+                        ]
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "2016-06-01",
+                            "type": "virtualNetworkPeerings",
+                            "name": "vnet2to1peering",
+                            "location": "[parameters('location')]",
+                            "dependsOn": [
+                                "[concat('Microsoft.Network/virtualNetworks/', 'blueprint-vnet-2')]",
+                                "[concat('Microsoft.Network/virtualNetworks/', 'blueprint-vnet')]"
+                            ],
+                            "properties": {
+                                "allowVirtualNetworkAccess": "true",
+                                "allowForwardedTraffic": "false",
+                                "allowGatewayTransit": "false",
+                                "useRemoteGateways": "false",
+                                "remoteVirtualNetwork": {
+                                    "id": "[resourceId('Microsoft.Network/virtualNetworks', 'blueprint-vnet')]"
+                                }
+                            }
+                        }
+                    ]
                 },
                 {
                     "type": "Microsoft.Network/networkInterfaces",
                     "apiVersion": "2018-11-01",
                     "name": "[concat('blueprint-nic', copyIndex())]",
-                    "location": "eastus",
+                    "location": "[parameters('location')]",
                     "copy": {
                         "name": "nicloop",
                         "count": 3
@@ -223,7 +295,7 @@
                     "type": "Microsoft.Compute/virtualMachines",
                     "apiVersion": "2018-10-01",
                     "name": "[concat('blueprint-vm', copyIndex())]",
-                    "location": "eastus",
+                    "location": "[parameters('location')]",
                     "copy": {
                         "name": "vmloop",
                         "count": 3
@@ -285,26 +357,35 @@
                 "value": "[parameters('ubuntuOSVersionGen')]"
             },
             "localNetworkPrefix": {
-                "value" : "[parameters('localNetworkPrefixGen')]"
+                "value": "[parameters('localNetworkPrefixGen')]"
             },
             "localGAtewayIpAddress": {
-                "value" : "[parameters('localGAtewayIpAddressGen')]"
+                "value": "[parameters('localGAtewayIpAddressGen')]"
             },
             "SharedKeyConnection": {
-                "value" : "[parameters('SharedKeyConnectionGen')]"
+                "value": "[parameters('SharedKeyConnectionGen')]"
             },
             "vnetAddressPrefix": {
-                "value" : "[parameters('vnetAddressPrefixGen')]"
+                "value": "[parameters('vnetAddressPrefixGen')]"
             },
             "defaultSubnetPrefix": {
-                "value" : "[parameters('defaultSubnetPrefixGen')]"
+                "value": "[parameters('defaultSubnetPrefixGen')]"
             },
             "cloudSubnetPrefix": {
-                "value" : "[parameters('cloudSubnetPrefixGen')]"
+                "value": "[parameters('cloudSubnetPrefixGen')]"
+            },
+            "secondaryVnetPrefix": {
+                "value": "[parameters('secondaryVnetPrefixGen')]"
+            },
+            "secondarySubnetPrefix": {
+                "value": "[parameters('secondarySubnetPrefixGen')]"
+            },
+            "location": {
+                "value": "[parameters('locationGen')]"
             }
         },
         "dependsOn": [],
-        "resourceGroup": "final-blueprint-rg",
+        "resourceGroup": "contoso-rg",
         "displayName": "virtual-machine-template",
         "description": "this is my first attempt to create a blueprint via command line"
     },

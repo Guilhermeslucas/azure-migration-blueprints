@@ -10,6 +10,13 @@
                 },
                 "defaultValue": "Standard_A1"
             },
+            "locationGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Location to deploy everything"
+                },
+                "defaultValue": "westus"
+            },
             "adminUsernameGen": {
                 "type": "string",
                 "metadata": {
@@ -36,7 +43,7 @@
                 "metadata" : {
                     "displayName": "Ip from local gateway"
                 },
-                "defaultValue" : "52.25.48.88"
+                "defaultValue" : "1.1.1.1"
             },
             "SharedKeyConnectionGen": {
                 "type": "string",
@@ -66,6 +73,20 @@
                 },
                 "defaultValue" : "10.0.200.0/29"
             },
+            "secondaryVnetPrefixGen": {
+                "type": "string",
+                "metadata" : {
+                    "displayName": "Adress prefix to secoundary Azure Vnet"
+                },
+                "defaultValue" : "192.168.0.0/24"
+            },
+            "secondarySubnetPrefixGen": {
+                "type": "string",
+                "metadata" : {
+                    "displayName": "Adress prefix to secondary Azure subnet"
+                },
+                "defaultValue" : "192.168.0.0/24"
+            },
             "ubuntuOSVersionGen": {
                 "type": "string",
                 "allowedValues": [
@@ -81,9 +102,9 @@
             }
         },
         "resourceGroups": {
-            "final-blueprint-rg": {
-                "name": "final-blueprint-rg",
-                "location": "eastus"
+            "contoso-rg": {
+                "name": "contoso-rg",
+                "location": "westus"
             }
         }
     },
