@@ -51,6 +51,14 @@ Here, we are using only powershell script steps.
 
 ## Sample Bluesprint
 
-The sample blueprint is pretty straighforward. It just create several copys
-of VMs to the subscription in order to show how to deploy several resources
-looping in the ARM template
+The sample blueprint tries to simulate a situation that an enterprise is migrating several
+vms from the on premises to the cloud. So, in this case the resources we have are:
+
+- Several copies of VMs on the cloud
+- Local and cloud gateway in order to create a vpn connection between the on premises and
+the cloud
+- An external cloud VNET that is peered with the VMs VNET.
+- The VNET that is has a vpn connection with the on premises, has several subnets, one for
+the gateway, one for the VMs, for example.
+
+Below is the design of this archtecture: 
