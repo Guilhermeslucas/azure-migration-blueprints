@@ -61,4 +61,6 @@ the cloud
 - The VNET that is has a vpn connection with the on premises, has several subnets, one for
 the gateway, one for the VMs, for example.
 
-Below is the design of this archtecture: 
+Below is the design of this archtecture:
+
+![arch](images/arch.jpg)
