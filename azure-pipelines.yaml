@@ -2,7 +2,8 @@ trigger:
 - master
 
 variables:
-- group: default-variables
+- group: contoso-variables
+
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -12,5 +13,11 @@ steps:
   displayName: Install all the necessary libs
 - pwsh: ./scripts/authorizeOnPipeline.ps1 -servicePrincipalPassword $(appPassword) -servicePrincipalId $(appId) -tenantId $(tenantId)
   displayName: Authorize against Azure
-- pwsh: ./scripts/publishAndAssign.ps1 -blueprintName blueprint-gulucasd -subscriptionId $(subscriptionId) -blueprintVersion $(Build.BuildNumber)
-  displayName: Create a version and assignment
+- pwsh: ./scripts/publishAndAssign.ps1 -blueprintName $(firstBlueprintName) -blueprintPath ./blueprint/ -subscriptionId $(firstSubscriptionId) -blueprintVersion $(Build.BuildNumber)
+  displayName: Create a version and assignment for $(firstBlueprintName)
+- pwsh: ./scripts/checkSuccess.ps1 -blueprintName $(firstBlueprintName) -subscriptionId $(firstSubscriptionId) -blueprintVersion $(Build.BuildNumber)
+  displayName: Check if the assignment was executed correctly for $(firstBlueprintName)
+- pwsh: ./scripts/publishAndAssign.ps1 -blueprintName $(secondBlueprintName) -blueprintPath ./blueprint-vnet2/ -subscriptionId $(secondSubscriptionId) -blueprintVersion $(Build.BuildNumber)
+  displayName: Create a version and assignment for $(secondBlueprintName)
+- pwsh: ./scripts/checkSuccess.ps1 -blueprintName $(secondBlueprintName) -subscriptionId $(secondSubscriptionId) -blueprintVersion $(Build.BuildNumber)
+  displayName: Check if the assignment was executed correctly for $(secondBlueprintName)

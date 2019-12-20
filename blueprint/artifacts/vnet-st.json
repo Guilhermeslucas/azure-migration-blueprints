@@ -1,0 +1,239 @@
+{
+    "properties": {
+        "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "location": {
+                    "type": "string"
+                },
+                "localNetworkPrefix": {
+                    "type": "string"
+                },
+                "localGAtewayIpAddress": {
+                    "type": "string"
+                },
+                "SharedKeyConnection": {
+                    "type": "string"
+                },
+                "vnet1AddressPrefix": {
+                    "type": "string"
+                },
+                "vnet1STSubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet1BackupSubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet1ConnectivitySubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet1DMZSubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet1ManagementSubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet1Reserva1SubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet1Reserva2SubnetPrefix": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "deployment-prefix": "blueprint-prefix",
+                "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet1Name'), 'GatewaySubnet')]",
+                "connectionName": "vpnConnection",
+                "localGatewayName": "localGateway",
+                "cloudGatewayName": "cloudGateway",
+                "vnet1Name": "vnet-1"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2018-07-01",
+                    "type": "Microsoft.Network/localNetworkGateways",
+                    "name": "[variables('localGatewayName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "localNetworkAddressSpace": {
+                            "addressPrefixes": [
+                                "[parameters('localNetworkPrefix')]"
+                            ]
+                        },
+                        "gatewayIpAddress": "[parameters('localGAtewayIpAddress')]"
+                    }
+                },
+                {
+                    "apiVersion": "2018-07-01",
+                    "name": "[variables('connectionName')]",
+                    "type": "Microsoft.Network/connections",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('cloudGatewayName'))]",
+                        "[resourceId('Microsoft.Network/localNetworkGateways', variables('localGatewayName'))]"
+                    ],
+                    "properties": {
+                        "virtualNetworkGateway1": {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('cloudGatewayName'))]"
+                        },
+                        "localNetworkGateway2": {
+                            "id": "[resourceId('Microsoft.Network/localNetworkGateways', variables('localGatewayName'))]"
+                        },
+                        "connectionType": "IPsec",
+                        "routingWeight": 10,
+                        "sharedKey": "[parameters('SharedKeyConnection')]"
+                    }
+                },
+                {
+                    "apiVersion": "2018-07-01",
+                    "type": "Microsoft.Network/publicIPAddresses",
+                    "name": "gateway-pip",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "publicIPAllocationMethod": "Dynamic"
+                    }
+                },
+                {
+                    "apiVersion": "2018-07-01",
+                    "type": "Microsoft.Network/virtualNetworkGateways",
+                    "name": "[variables('cloudGatewayName')]",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/publicIPAddresses', 'gateway-pip')]",
+                        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1Name'))]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[variables('gatewaySubnetRef')]"
+                                    },
+                                    "publicIPAddress": {
+                                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'gateway-pip')]"
+                                    }
+                                },
+                                "name": "vnetGatewayConfig"
+                            }
+                        ],
+                        "sku": {
+                            "name": "Basic",
+                            "tier": "Basic"
+                        },
+                        "gatewayType": "Vpn",
+                        "vpnType": "RouteBased",
+                        "enableBgp": "false"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/virtualNetworks",
+                    "apiVersion": "2018-11-01",
+                    "name": "[variables('vnet1Name')]",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                    ],
+                    "properties": {
+                        "addressSpace": {
+                            "addressPrefixes": [
+                                "[parameters('vnet1AddressPrefix')]"
+                            ]
+                        },
+                        "subnets": [
+                            {
+                                "name": "management-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet1ManagementSubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "GatewaySubnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet1ConnectivitySubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "servicios-redes-seguridad-transversales-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet1STSubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "dmz-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet1DMZSubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "backup-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet1BackupSubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "reserva1-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet1Reserva1SubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "reserva2-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet1Reserva2SubnetPrefix')]"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ],
+            "outputs": {}
+        },
+        "parameters": {
+            "localNetworkPrefix": {
+                "value": "[parameters('localNetworkPrefixGen')]"
+            },
+            "localGAtewayIpAddress": {
+                "value": "[parameters('localGAtewayIpAddressGen')]"
+            },
+            "SharedKeyConnection": {
+                "value": "[parameters('SharedKeyConnectionGen')]"
+            },
+            "vnet1AddressPrefix": {
+                "value": "[parameters('vnet1AddressPrefixGen')]"
+            },
+            "vnet1ConnectivitySubnetPrefix": {
+                "value": "[parameters('vnet1ConnectivitySubnetPrefixGen')]"
+            },
+            "vnet1STSubnetPrefix": {
+                "value": "[parameters('vnet1STSubnetPrefixGen')]"
+            },
+            "vnet1DMZSubnetPrefix": {
+                "value": "[parameters('vnet1DMZSubnetPrefixGen')]"
+            },
+            "vnet1ManagementSubnetPrefix": {
+                "value": "[parameters('vnet1ManagementSubnetPrefixGen')]"
+            },
+            "vnet1BackupSubnetPrefix": {
+                "value": "[parameters('vnet1BackupSubnetPrefixGen')]"
+            },
+            "vnet1Reserva1SubnetPrefix": {
+                "value": "[parameters('vnet1Reserva1SubnetPrefixGen')]"
+            },
+            "vnet1Reserva2SubnetPrefix": {
+                "value": "[parameters('vnet1Reserva2SubnetPrefixGen')]"
+            },
+            "location": {
+                "value": "[parameters('locationGen')]"
+            }
+        },
+        "dependsOn": [],
+        "resourceGroup": "contoso-final-rg",
+        "displayName": "virtual-machine-template",
+        "description": "blueprint for vnet1"
+    },
+    "kind": "template",
+    "id": "/providers/Microsoft.Blueprint/blueprints/final-blueprint-gulucasd/artifacts/virtualmachine",
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "name": "virtualmachine"
+}

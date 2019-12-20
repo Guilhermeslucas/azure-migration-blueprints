@@ -19,33 +19,12 @@
                 },
                 "defaultValue": "Contoso"
             },
-            "vmSizeGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Type of VM"
-                },
-                "defaultValue": "Standard_A1"
-            },
             "locationGen": {
                 "type": "string",
                 "metadata": {
                     "displayName": "Location to deploy everything"
                 },
                 "defaultValue": "westus"
-            },
-            "adminUsernameGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "User to log in"
-                },
-                "defaultValue": "gulucasd"
-            },
-            "adminPasswordGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Password to login"
-                },
-                "defaultValue": "awesomepassword123456!@#$%"
             },
             "localNetworkPrefixGen": {
                 "type": "string",
@@ -123,76 +102,6 @@
                     "displayName": "Adress prefix to Reserva 2 subnet (Reserved Address)"
                 },
                 "defaultValue": "10.10.9.128/25"
-            },
-            "vnet2PrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Vnet 2"
-                },
-                "defaultValue": "10.10.16.0/20"
-            },
-            "vnet2DBSubnetPrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Bases de Datos subnet"
-                },
-                "defaultValue": "10.10.16.0/24"
-            },
-            "vnet2ServicesPrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Servicios subnet (File Servers, Print Servers)"
-                },
-                "defaultValue": "10.10.17.0/24"
-            },
-            "vnet2ManagementPrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Management subnet (Pivote, Bastion)"
-                },
-                "defaultValue": "10.10.18.0/26"
-            },
-            "vnet2MonitoringPrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Monitoreo subnet"
-                },
-                "defaultValue": "10.10.18.64/26"
-            },
-            "vnet2AplicationsSubnetPrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Aplicaciones subnet (Production and Testing)"
-                },
-                "defaultValue": "10.10.20.0/22"
-            },
-            "vnet2Reserva1SubnetPrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Reserva 1 subnet (Reserved address)"
-                },
-                "defaultValue": "10.10.18.128/25"
-            },
-            "vnet2Reserva2SubnetPrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Reserva 2 subnet (Reserved Address)"
-                },
-                "defaultValue": "10.10.19.0/24"
-            },
-            "vnet2Reserva3SubnetPrefixGen": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "Adress prefix to Reserva 3 subnet (Reserved Address)"
-                },
-                "defaultValue": "10.10.24.0/21"
-            },
-            "windowsOSVersionGen": {
-                "type": "string",
-                "metadata": {
-                    "description": "The Ubuntu version for the VM."
-                },
-                "defaultValue": "2012-R2-Datacenter"
             }
         },
         "resourceGroups": {

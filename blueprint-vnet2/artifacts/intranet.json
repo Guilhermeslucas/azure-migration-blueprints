@@ -1,0 +1,757 @@
+{
+    "properties": {
+        "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "vmSize": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "adminUsername": {
+                    "type": "string"
+                },
+                "adminPassword": {
+                    "type": "string"
+                },
+                "windowsOSVersion": {
+                    "type": "string"
+                },
+                "vnet2Prefix": {
+                    "type": "string"
+                },
+                "vnet2DBSubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet2ServicesPrefix": {
+                    "type": "string"
+                },
+                "vnet2ManagementPrefix": {
+                    "type": "string"
+                },
+                "vnet2MonitoringPrefix": {
+                    "type": "string"
+                },
+                "vnet2AplicationsSubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet2Reserva1SubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet2Reserva2SubnetPrefix": {
+                    "type": "string"
+                },
+                "vnet2Reserva3SubnetPrefix": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "deployment-prefix": "blueprint-prefix",
+                "nsgName": "blueprintNsg",
+                "vnet2Name": "vnet-2"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Network/networkSecurityGroups",
+                    "apiVersion": "2019-08-01",
+                    "name": "[variables('nsgName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "securityRules": [
+                            {
+                                "name": "default-allow-22",
+                                "properties": {
+                                    "priority": 1000,
+                                    "access": "Allow",
+                                    "direction": "Inbound",
+                                    "destinationPortRange": "22",
+                                    "protocol": "TCP",
+                                    "sourceAddressPrefix": "*",
+                                    "sourcePortRange": "*",
+                                    "destinationAddressPrefix": "*"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "apiVersion": "2016-03-30",
+                    "type": "Microsoft.Network/virtualNetworks",
+                    "name": "[variables('vnet2Name')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "addressSpace": {
+                            "addressPrefixes": [
+                                "[parameters('vnet2Prefix')]"
+                            ]
+                        },
+                        "subnets": [
+                            {
+                                "name": "bases-de-datos-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet2DBSubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "servicios-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet2ServicesPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "management-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet2ManagementPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "monitoreo-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet2MonitoringPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "aplicaciones-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet2AplicationsSubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "reserva1-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet2Reserva1SubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "reserva2-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet2Reserva2SubnetPrefix')]"
+                                }
+                            },
+                            {
+                                "name": "reserva3-subnet",
+                                "properties": {
+                                    "addressPrefix": "[parameters('vnet2Reserva3SubnetPrefix')]"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2018-11-01",
+                    "name": "contoso-nic",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet2Name'))]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "contoso-ip-configuration",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet2Name'), 'servicios-subnet')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2018-11-01",
+                    "name": "tte-contoso-nic",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet2Name'))]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "contoso-ip-configuration",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet2Name'), 'servicios-subnet')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2018-11-01",
+                    "name": "ccorp-contoso-nic",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet2Name'))]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "contoso-ip-configuration",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet2Name'), 'servicios-subnet')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2018-11-01",
+                    "name": "andes-contoso-nic",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet2Name'))]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "contoso-ip-configuration",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet2Name'), 'servicios-subnet')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2018-11-01",
+                    "name": "frventanas-contoso-nic",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet2Name'))]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "contoso-ip-configuration",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet2Name'), 'servicios-subnet')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2018-11-01",
+                    "name": "cnorte-contoso-nic",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet2Name'))]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "contoso-ip-configuration",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet2Name'), 'servicios-subnet')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2018-11-01",
+                    "name": "mgaby-contoso-nic",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet2Name'))]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "contoso-ip-configuration",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet2Name'), 'servicios-subnet')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2018-10-01",
+                    "name": "contoso",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/networkInterfaces', 'contoso-nic')]"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "Standard_B2ms"
+                        },
+                        "osProfile": {
+                            "computerName": "contoso",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "adminPassword": "[parameters('adminPassword')]"
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "MicrosoftWindowsServer",
+                                "offer": "WindowsServer",
+                                "sku": "[parameters('windowsOSVersion')]",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "createOption": "FromImage",
+                                "diskSizeGB": 150
+                            },
+                            "dataDisks": [
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 0,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 1,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 2,
+                                    "createOption": "Empty"
+                                }
+                            ]
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', 'contoso-nic')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2018-10-01",
+                    "name": "tte-contoso",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/networkInterfaces', 'tte-contoso-nic')]"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "Standard_B2ms"
+                        },
+                        "osProfile": {
+                            "computerName": "tte",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "adminPassword": "[parameters('adminPassword')]"
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "MicrosoftWindowsServer",
+                                "offer": "WindowsServer",
+                                "sku": "[parameters('windowsOSVersion')]",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "createOption": "FromImage",
+                                "diskSizeGB": 150
+                            },
+                            "dataDisks": [
+                                {
+                                    "diskSizeGB": 10,
+                                    "lun": 0,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 80,
+                                    "lun": 1,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 2,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 3,
+                                    "createOption": "Empty"
+                                }
+                            ]
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', 'tte-contoso-nic')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2018-10-01",
+                    "name": "ccorp-contoso",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/networkInterfaces', 'ccorp-contoso-nic')]"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "Standard_B2ms"
+                        },
+                        "osProfile": {
+                            "computerName": "ccorp",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "adminPassword": "[parameters('adminPassword')]"
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "MicrosoftWindowsServer",
+                                "offer": "WindowsServer",
+                                "sku": "[parameters('windowsOSVersion')]",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "createOption": "FromImage",
+                                "diskSizeGB": 150
+                            },
+                            "dataDisks": [
+                                {
+                                    "diskSizeGB": 30,
+                                    "lun": 0,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 50,
+                                    "lun": 1,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 50,
+                                    "lun": 2,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 50,
+                                    "lun": 3,
+                                    "createOption": "Empty"
+                                }
+                            ]
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ccorp-contoso-nic')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2018-10-01",
+                    "name": "andes-contoso",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/networkInterfaces', 'andes-contoso-nic')]"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "Standard_B2ms"
+                        },
+                        "osProfile": {
+                            "computerName": "andes-contoso",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "adminPassword": "[parameters('adminPassword')]"
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "MicrosoftWindowsServer",
+                                "offer": "WindowsServer",
+                                "sku": "[parameters('windowsOSVersion')]",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "createOption": "FromImage",
+                                "diskSizeGB": 150
+                            },
+                            "dataDisks": [
+                                {
+                                    "diskSizeGB": 10,
+                                    "lun": 0,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 80,
+                                    "lun": 1,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 2,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 3,
+                                    "createOption": "Empty"
+                                }
+                            ]
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', 'andes-contoso-nic')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2018-10-01",
+                    "name": "frventanas-contoso",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/networkInterfaces', 'frventanas-contoso-nic')]"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "Standard_B2s"
+                        },
+                        "osProfile": {
+                            "computerName": "frventanas",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "adminPassword": "[parameters('adminPassword')]"
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "MicrosoftWindowsServer",
+                                "offer": "WindowsServer",
+                                "sku": "[parameters('windowsOSVersion')]",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "createOption": "FromImage",
+                                "diskSizeGB": 150
+                            },
+                            "dataDisks": [
+                                {
+                                    "diskSizeGB": 10,
+                                    "lun": 0,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 80,
+                                    "lun": 1,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 2,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 3,
+                                    "createOption": "Empty"
+                                }
+                            ]
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', 'frventanas-contoso-nic')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2018-10-01",
+                    "name": "cnorte-contoso",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/networkInterfaces', 'cnorte-contoso-nic')]"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "Standard_B2ms"
+                        },
+                        "osProfile": {
+                            "computerName": "cnorte",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "adminPassword": "[parameters('adminPassword')]"
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "MicrosoftWindowsServer",
+                                "offer": "WindowsServer",
+                                "sku": "[parameters('windowsOSVersion')]",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "createOption": "FromImage",
+                                "diskSizeGB": 150
+                            },
+                            "dataDisks": [
+                                {
+                                    "diskSizeGB": 10,
+                                    "lun": 0,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 1,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 2,
+                                    "createOption": "Empty"
+                                }
+                            ]
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', 'cnorte-contoso-nic')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2018-10-01",
+                    "name": "mgaby-contoso",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/networkInterfaces', 'mgaby-contoso-nic')]"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "Standard_B2ms"
+                        },
+                        "osProfile": {
+                            "computerName": "mgaby",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "adminPassword": "[parameters('adminPassword')]"
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "MicrosoftWindowsServer",
+                                "offer": "WindowsServer",
+                                "sku": "[parameters('windowsOSVersion')]",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "createOption": "FromImage",
+                                "diskSizeGB": 150
+                            },
+                            "dataDisks": [
+                                {
+                                    "diskSizeGB": 10,
+                                    "lun": 0,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 1,
+                                    "createOption": "Empty"
+                                },
+                                {
+                                    "diskSizeGB": 20,
+                                    "lun": 2,
+                                    "createOption": "Empty"
+                                }
+                            ]
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', 'mgaby-contoso-nic')]"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ],
+            "outputs": {}
+        },
+        "parameters": {
+            "vmSize": {
+                "value": "[parameters('vmSizeGen')]"
+            },
+            "adminUsername": {
+                "value": "[parameters('adminUsernameGen')]"
+            },
+            "adminPassword": {
+                "value": "[parameters('adminPasswordGen')]"
+            },
+            "windowsOSVersion": {
+                "value": "[parameters('windowsOSVersionGen')]"
+            },
+            "vnet2DBSubnetPrefix": {
+                "value": "[parameters('vnet2DBSubnetPrefixGen')]"
+            },
+            "vnet2Prefix": {
+                "value": "[parameters('vnet2PrefixGen')]"
+            },
+            "vnet2ServicesPrefix": {
+                "value": "[parameters('vnet2ServicesPrefixGen')]"
+            },
+            "vnet2ManagementPrefix": {
+                "value": "[parameters('vnet2ManagementPrefixGen')]"
+            },
+            "vnet2MonitoringPrefix": {
+                "value": "[parameters('vnet2MonitoringPrefixGen')]"
+            },
+            "vnet2AplicationsSubnetPrefix": {
+                "value": "[parameters('vnet2AplicationsSubnetPrefixGen')]"
+            },
+            "vnet2Reserva1SubnetPrefix": {
+                "value": "[parameters('vnet2Reserva1SubnetPrefixGen')]"
+            },
+            "vnet2Reserva2SubnetPrefix": {
+                "value": "[parameters('vnet2Reserva2SubnetPrefixGen')]"
+            },
+            "vnet2Reserva3SubnetPrefix": {
+                "value": "[parameters('vnet2Reserva3SubnetPrefixGen')]"
+            },
+            "location": {
+                "value": "[parameters('locationGen')]"
+            }
+        },
+        "dependsOn": [],
+        "resourceGroup": "contoso-rg-vnet2",
+        "displayName": "vnet-2",
+        "description": "vnet-2 deployment on a second vnet"
+    },
+    "kind": "template",
+    "id": "/providers/Microsoft.Blueprint/blueprints/vnet2-blueprint/artifacts/virtualmachine",
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "name": "virtualmachine"
+}
