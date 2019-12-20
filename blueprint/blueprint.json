@@ -1,8 +1,24 @@
 {
     "properties": {
-        "description": "This is my first attempt of creating a blueprint as code. Lets see how it goes!",
+        "description": "Blueprint that designs a big enterprise migration to Azure",
         "targetScope": "subscription",
         "parameters": {
+            "tagName": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Tag Name",
+                    "description": "Tag name for each resource that gets created"
+                },
+                "defaultValue": "Enterprise"
+            },
+            "tagValue": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Tag Value",
+                    "description": "Tag value for each resource that gets created"
+                },
+                "defaultValue": "Contoso"
+            },
             "vmSizeGen": {
                 "type": "string",
                 "metadata": {
@@ -33,78 +49,156 @@
             },
             "localNetworkPrefixGen": {
                 "type": "string",
-                "metadata" : {
+                "metadata": {
                     "displayName": "Local Network Prefix"
                 },
-                "defaultValue" : "10.3.0.0/24"
+                "defaultValue": "10.3.0.0/24"
             },
             "localGAtewayIpAddressGen": {
                 "type": "string",
-                "metadata" : {
+                "metadata": {
                     "displayName": "Ip from local gateway"
                 },
-                "defaultValue" : "1.1.1.1"
+                "defaultValue": "1.1.1.1"
             },
             "SharedKeyConnectionGen": {
                 "type": "string",
-                "metadata" : {
+                "metadata": {
                     "displayName": "Shared Key Value for VPN Connection"
                 },
-                "defaultValue" : "awesomesharedkey12345!@#$%"
+                "defaultValue": "awesomesharedkey12345!@#$%"
             },
-            "vnetAddressPrefixGen": {
+            "vnet1AddressPrefixGen": {
                 "type": "string",
-                "metadata" : {
-                    "displayName": "Adress prefix to Vnet"
+                "metadata": {
+                    "displayName": "Adress prefix to Vnet1"
                 },
-                "defaultValue" : "10.0.0.0/16"
+                "defaultValue": "10.10.8.0/23"
             },
-            "defaultSubnetPrefixGen": {
+            "vnet1ConnectivitySubnetPrefixGen": {
                 "type": "string",
-                "metadata" : {
-                    "displayName": "Adress prefix to Vnet"
+                "metadata": {
+                    "displayName": "Adress prefix to Connectivity/GatewaySubnet subnet"
                 },
-                "defaultValue" : "10.0.0.0/24"
+                "defaultValue": "10.10.8.0/26"
             },
-            "cloudSubnetPrefixGen": {
+            "vnet1STSubnetPrefixGen": {
                 "type": "string",
-                "metadata" : {
-                    "displayName": "Adress prefix to Vnet"
+                "metadata": {
+                    "displayName": "Adress prefix to Servicios Redes y Seguridad Transversal subnet"
                 },
-                "defaultValue" : "10.0.200.0/29"
+                "defaultValue": "10.10.8.64/26"
             },
-            "secondaryVnetPrefixGen": {
+            "vnet1DMZSubnetPrefixGen": {
                 "type": "string",
-                "metadata" : {
-                    "displayName": "Adress prefix to secoundary Azure Vnet"
+                "metadata": {
+                    "displayName": "Adress prefix to DMZ subnet"
                 },
-                "defaultValue" : "192.168.0.0/24"
+                "defaultValue": "10.10.8.128/26"
             },
-            "secondarySubnetPrefixGen": {
+            "vnet1ManagementSubnetPrefixGen": {
                 "type": "string",
-                "metadata" : {
-                    "displayName": "Adress prefix to secondary Azure subnet"
+                "metadata": {
+                    "displayName": "Adress prefix to management subnet"
                 },
-                "defaultValue" : "192.168.0.0/24"
+                "defaultValue": "10.10.8.192/26"
             },
-            "ubuntuOSVersionGen": {
+            "vnet1BackupSubnetPrefixGen": {
                 "type": "string",
-                "allowedValues": [
-                    "12.04.5-LTS",
-                    "14.04.5-LTS",
-                    "16.04.0-LTS",
-                    "18.04-LTS"
-                ],
+                "metadata": {
+                    "displayName": "Adress prefix to backup subnet"
+                },
+                "defaultValue": "10.10.9.0/26"
+            },
+            "vnet1Reserva1SubnetPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Reserva 1 subnet (Reserved address)"
+                },
+                "defaultValue": "10.10.9.64/26"
+            },
+            "vnet1Reserva2SubnetPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Reserva 2 subnet (Reserved Address)"
+                },
+                "defaultValue": "10.10.9.128/25"
+            },
+            "vnet2PrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Vnet 2"
+                },
+                "defaultValue": "10.10.16.0/20"
+            },
+            "vnet2DBSubnetPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Bases de Datos subnet"
+                },
+                "defaultValue": "10.10.16.0/24"
+            },
+            "vnet2ServicesPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Servicios subnet (File Servers, Print Servers)"
+                },
+                "defaultValue": "10.10.17.0/24"
+            },
+            "vnet2ManagementPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Management subnet (Pivote, Bastion)"
+                },
+                "defaultValue": "10.10.18.0/26"
+            },
+            "vnet2MonitoringPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Monitoreo subnet"
+                },
+                "defaultValue": "10.10.18.64/26"
+            },
+            "vnet2AplicationsSubnetPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Aplicaciones subnet (Production and Testing)"
+                },
+                "defaultValue": "10.10.20.0/22"
+            },
+            "vnet2Reserva1SubnetPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Reserva 1 subnet (Reserved address)"
+                },
+                "defaultValue": "10.10.18.128/25"
+            },
+            "vnet2Reserva2SubnetPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Reserva 2 subnet (Reserved Address)"
+                },
+                "defaultValue": "10.10.19.0/24"
+            },
+            "vnet2Reserva3SubnetPrefixGen": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Adress prefix to Reserva 3 subnet (Reserved Address)"
+                },
+                "defaultValue": "10.10.24.0/21"
+            },
+            "windowsOSVersionGen": {
+                "type": "string",
                 "metadata": {
                     "description": "The Ubuntu version for the VM."
                 },
-                "defaultValue": "16.04.0-LTS"
+                "defaultValue": "2012-R2-Datacenter"
             }
         },
         "resourceGroups": {
-            "contoso-rg": {
-                "name": "contoso-rg",
-                "location": "westus"
+            "contoso-final-rg": {
+                "name": "contoso-final-rg",
+                "location": "eastus2"
             }
         }
     },

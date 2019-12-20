@@ -4,6 +4,8 @@ param(
     [Parameter(Mandatory=$true)]$blueprintVersion
 )
 
+. "./scripts/common.ps1"
+
 # this is a command in powershell
 Import-AzBlueprintWithArtifact -Name $blueprintName -SubscriptionId $subscriptionId -InputPath  "./blueprint/" -Force
 
@@ -19,6 +21,7 @@ $publishedBp = Get-AzBlueprint -SubscriptionId $subscriptionId -Name $blueprintN
 $params = @{ vmSizeGen = "Standard_A2" }
 
 # Assign the new blueprint to the specified subscription (Assignment updates should use Set-AzBlueprintAssignment
-$joinedName = -join($blueprintName, $blueprintVersion)
+$joinedName = generateName -blueprintName $blueprintName -blueprintVersion $blueprintVersion
 
-New-AzBlueprintAssignment -Blueprint $publishedBp -Location eastus -SubscriptionId $subscriptionId -Name $joinedName.Replace(".","") -Parameter $params
+# Submit a new assignment with the deserved values
+New-AzBlueprintAssignment -Blueprint $publishedBp -Location eastus -SubscriptionId $subscriptionId -Name $joinedName -Parameter $params
