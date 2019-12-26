@@ -24,7 +24,7 @@
                 "metadata": {
                     "displayName": "Location to deploy everything"
                 },
-                "defaultValue": "westus"
+                "defaultValue": "eastus2"
             },
             "localNetworkPrefixGen": {
                 "type": "string",
