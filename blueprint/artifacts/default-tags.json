@@ -13,7 +13,7 @@
       "displayName": "Apply default tag and value to all resources"
     },
     "kind": "policyAssignment",
-    "id": "/providers/Microsoft.Blueprint/blueprints/final-blueprint-gulucasd/artifacts/apply-default-tag",
+    "id": "/providers/Microsoft.Blueprint/blueprints/final-blueprint-servicios-transversales/artifacts/apply-default-tag",
     "type": "Microsoft.Blueprint/blueprints/artifacts",
     "name": "apply-default-tag"
   }
